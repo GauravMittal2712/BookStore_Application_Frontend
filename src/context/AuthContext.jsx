@@ -1,50 +1,83 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { authApi } from '../api/index.js';
-import { refreshSession, setAccessToken, setAuthLostHandler } from '../api/client.js';
-
-const FLAG = 'bs_has_session';
-const flag = {
-  get: () => { try { return localStorage.getItem(FLAG) === '1'; } catch { return false; } },
-  set: () => { try { localStorage.setItem(FLAG, '1'); } catch { /* ignore */ } },
-  clear: () => { try { localStorage.removeItem(FLAG); } catch { /* ignore */ } },
-};
+import { setAccessToken, setAuthLostHandler, refreshSession } from '../api/client.js';
 
 const AuthCtx = createContext(null);
-export const useAuth = () => useContext(AuthCtx);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [ready, setReady] = useState(false);
 
-  useEffect(() => {
-    setAuthLostHandler(() => { setUser(null); flag.clear(); });
-    // Only try to restore a session if this browser has logged in before: the auth routes are
-    // rate limited (10 / 15 min), so we don't spend one on every anonymous page load.
-    if (!flag.get()) { setReady(true); return undefined; }
-    let alive = true;
-    refreshSession()
-      .then((d) => { if (alive) setUser(d.user); })
-      .catch(() => flag.clear())
-      .finally(() => { if (alive) setReady(true); });
-    return () => { alive = false; };
-  }, []);
-
-  const finish = (data) => {
+  const applySession = useCallback((data) => {
     setAccessToken(data.accessToken);
     setUser(data.user);
-    flag.set();
-    return data.user;
-  };
-  const login = useCallback(async (email, password) => finish((await authApi.login({ email, password })).data), []);
-  const register = useCallback(async (body) => finish((await authApi.register(body)).data), []);
-  const logout = useCallback(async () => {
-    try { await authApi.logout(); } catch { /* session may already be gone */ }
+  }, []);
+
+  const clearSession = useCallback(() => {
     setAccessToken(null);
     setUser(null);
-    flag.clear();
   }, []);
-  const forget = useCallback(() => { setAccessToken(null); setUser(null); flag.clear(); }, []);
 
-  const value = useMemo(() => ({ user, ready, setUser, login, register, logout, forget }), [user, ready, login, register, logout, forget]);
+  useEffect(() => {
+    setAuthLostHandler(() => clearSession());
+    (async () => {
+      try {
+        const data = await refreshSession();
+        applySession(data);
+      } catch {
+        clearSession();
+      } finally {
+        setReady(true);
+      }
+    })();
+  }, [applySession, clearSession]);
+
+  const login = useCallback(
+    async (email, password) => {
+      const r = await authApi.login({ email, password });
+      applySession(r.data);
+      return r.data.user;
+    },
+    [applySession]
+  );
+
+  const register = useCallback(
+    async (body) => {
+      const r = await authApi.register(body);
+      applySession(r.data);
+      return r.data.user;
+    },
+    [applySession]
+  );
+
+  const loginWithGoogle = useCallback(
+    async (idToken) => {
+      const r = await authApi.google(idToken);
+      applySession(r.data);
+      return r.data.user;
+    },
+    [applySession]
+  );
+
+  const logout = useCallback(async () => {
+    try {
+      await authApi.logout();
+    } catch {
+      /* ignore */
+    }
+    clearSession();
+  }, [clearSession]);
+
+  const value = useMemo(
+    () => ({ user, ready, login, register, loginWithGoogle, logout, setUser }),
+    [user, ready, login, register, loginWithGoogle, logout]
+  );
+
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
+}
+
+export function useAuth() {
+  const ctx = useContext(AuthCtx);
+  if (!ctx) throw new Error('useAuth outside provider');
+  return ctx;
 }

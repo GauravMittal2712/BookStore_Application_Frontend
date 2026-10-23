@@ -84,7 +84,7 @@ export default function CartPage() {
     setBusy(true); setErr('');
     keyRef.current = keyRef.current || uuid();
     try {
-      const { data: order } = await ordersApi.place(selected.id, keyRef.current);
+      const { data: order } = await ordersApi.place({ addressId: selected.id }, keyRef.current);
       keyRef.current = null;
       await refresh();
       nav('/order-success', { replace: true, state: { order, address: selected } });

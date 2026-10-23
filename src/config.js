@@ -5,3 +5,5 @@ export const STORE = {
   address: '42, 14th Main, 15th Cross, Sector 4, opp to BDA complex, near Kumarakom restaurant, HSR Layout, Bangalore 560034',
 };
 export const PAGE_SIZE = 12;
+export const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
+export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';

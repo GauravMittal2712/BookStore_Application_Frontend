@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { EyeIcon } from '../components/Icons.jsx';
 import { MOBILE_RE, errorText, passwordError } from '../utils/format.js';
+import { GOOGLE_CLIENT_ID } from '../config.js';
 
 function Field({ label, error, children }) {
   return (
@@ -14,9 +15,27 @@ function Field({ label, error, children }) {
   );
 }
 
+function loadGoogleScript() {
+  return new Promise((resolve, reject) => {
+    if (window.google?.accounts?.id) return resolve();
+    const existing = document.getElementById('google-gsi');
+    if (existing) {
+      existing.addEventListener('load', () => resolve());
+      return;
+    }
+    const s = document.createElement('script');
+    s.id = 'google-gsi';
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.async = true;
+    s.onload = () => resolve();
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
 export default function AuthPage({ mode }) {
   const signup = mode === 'signup';
-  const { user, ready, login, register } = useAuth();
+  const { user, ready, login, register, loginWithGoogle } = useAuth();
   const nav = useNavigate();
   const loc = useLocation();
   const from = loc.state?.from || '/';
@@ -25,9 +44,51 @@ export default function AuthPage({ mode }) {
   const [errs, setErrs] = useState({});
   const [serverErr, setServerErr] = useState('');
   const [busy, setBusy] = useState(false);
+  const googleBtnRef = useRef(null);
 
   if (ready && user) return <Navigate to={from} replace />;
-  const set = (k) => (e) => { setF({ ...f, [k]: e.target.value }); setErrs({ ...errs, [k]: '' }); };
+  const set = (k) => (e) => {
+    setF({ ...f, [k]: e.target.value });
+    setErrs({ ...errs, [k]: '' });
+  };
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID || signup || !googleBtnRef.current) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        await loadGoogleScript();
+        if (cancelled || !window.google?.accounts?.id) return;
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: async (resp) => {
+            setServerErr('');
+            setBusy(true);
+            try {
+              await loginWithGoogle(resp.credential);
+              nav(from, { replace: true });
+            } catch (ex) {
+              setServerErr(errorText(ex));
+            } finally {
+              setBusy(false);
+            }
+          },
+        });
+        googleBtnRef.current.innerHTML = '';
+        window.google.accounts.id.renderButton(googleBtnRef.current, {
+          theme: 'outline',
+          size: 'large',
+          width: 280,
+          text: 'signin_with',
+        });
+      } catch {
+        /* script blocked */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [signup, loginWithGoogle, nav, from]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -37,19 +98,27 @@ export default function AuthPage({ mode }) {
     if (signup) {
       const pe = passwordError(f.password);
       if (pe) er.password = pe;
-      if (!MOBILE_RE.test(f.mobile.trim())) er.mobile = 'Enter a valid mobile number';
+      if (f.mobile && !MOBILE_RE.test(f.mobile.trim())) er.mobile = 'Enter a valid mobile number';
     } else if (!f.password) er.password = 'Enter your password';
     setErrs(er);
     setServerErr('');
     if (Object.keys(er).length) return;
     setBusy(true);
     try {
-      if (signup) await register({ name: f.name.trim(), email: f.email.trim(), password: f.password, mobile: f.mobile.trim() });
-      else await login(f.email.trim(), f.password);
+      if (signup) {
+        await register({
+          name: f.name.trim(),
+          email: f.email.trim(),
+          password: f.password,
+          mobile: f.mobile.trim() || undefined,
+        });
+      } else await login(f.email.trim(), f.password);
       nav(from, { replace: true });
     } catch (ex) {
       setServerErr(errorText(ex));
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   };
 
   const tabState = { state: loc.state };
@@ -62,34 +131,60 @@ export default function AuthPage({ mode }) {
         </div>
         <div className="auth-card">
           <div className="auth-tabs" role="tablist">
-            <Link role="tab" aria-selected={!signup} className={!signup ? 'on' : ''} to="/login" {...tabState}>LOGIN</Link>
-            <Link role="tab" aria-selected={signup} className={signup ? 'on' : ''} to="/signup" {...tabState}>SIGNUP</Link>
+            <Link role="tab" aria-selected={!signup} to="/login" {...tabState}>LOGIN</Link>
+            <Link role="tab" aria-selected={signup} to="/signup" {...tabState}>SIGNUP</Link>
           </div>
           <form onSubmit={submit} noValidate>
             {signup && (
               <Field label="Full Name" error={errs.name}>
-                <input autoComplete="name" value={f.name} onChange={set('name')} maxLength={100} />
+                <input value={f.name} onChange={set('name')} autoComplete="name" />
               </Field>
             )}
             <Field label="Email Id" error={errs.email}>
-              <input type="email" autoComplete="email" value={f.email} onChange={set('email')} />
+              <input type="email" value={f.email} onChange={set('email')} autoComplete="email" />
             </Field>
             <Field label="Password" error={errs.password}>
-              <span className="pw">
-                <input type={show ? 'text' : 'password'} autoComplete={signup ? 'new-password' : 'current-password'} value={f.password} onChange={set('password')} maxLength={72} />
-                <button type="button" className="eye" onClick={() => setShow((s) => !s)} aria-label={show ? 'Hide password' : 'Show password'}><EyeIcon off={!show} /></button>
-              </span>
+              <div className="pwd">
+                <input
+                  type={show ? 'text' : 'password'}
+                  value={f.password}
+                  onChange={set('password')}
+                  autoComplete={signup ? 'new-password' : 'current-password'}
+                />
+                <button type="button" className="eye" onClick={() => setShow((s) => !s)} aria-label="Toggle password">
+                  <EyeIcon />
+                </button>
+              </div>
             </Field>
-            {signup ? (
+            {signup && (
               <Field label="Mobile Number" error={errs.mobile}>
-                <input type="tel" autoComplete="tel" value={f.mobile} onChange={set('mobile')} maxLength={20} />
+                <input type="tel" value={f.mobile} onChange={set('mobile')} autoComplete="tel" />
               </Field>
-            ) : (
-              <div className="forgot"><Link to="/forgot-password">Forgot Password?</Link></div>
             )}
-            {serverErr && <p className="form-err" role="alert">{serverErr}</p>}
-            <button className="btn-red" type="submit" disabled={busy}>{busy ? 'Please wait…' : signup ? 'Signup' : 'Login'}</button>
+            {!signup && (
+              <div className="auth-forgot">
+                <Link to="/forgot-password">Forgot Password?</Link>
+              </div>
+            )}
+            {serverErr && <p className="form-err">{serverErr}</p>}
+            <button className="btn-red wide" disabled={busy} type="submit">
+              {busy ? 'Please wait…' : signup ? 'Signup' : 'Login'}
+            </button>
           </form>
+          {!signup && (
+            <>
+              <div className="auth-or"><span>OR</span></div>
+              <div className="auth-social">
+                <div ref={googleBtnRef} className="google-btn-host" />
+                {!GOOGLE_CLIENT_ID && (
+                  <p className="hint-muted">Set VITE_GOOGLE_CLIENT_ID to enable Google login</p>
+                )}
+                <button type="button" className="btn-fb" disabled title="Facebook login not configured">
+                  Facebook
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

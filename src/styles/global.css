@@ -338,3 +338,36 @@ button:disabled { opacity: .55; cursor: not-allowed; }
   .success-table { font-size: 11px; }
   .success-table th, .success-table td { padding: 10px 8px; }
 }
+
+/* ---------- Google / social on auth ---------- */
+.auth-social { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 8px; }
+.google-btn-host { min-height: 40px; display: flex; justify-content: center; }
+.btn-fb { background: #4267B2; color: #fff; height: 36px; padding: 0 24px; border: 0; border-radius: 2px; font: 500 12px Roboto, sans-serif; cursor: not-allowed; opacity: .7; }
+.hint-muted { font-size: 11px; color: #999; text-align: center; }
+.form-ok { color: #2e7d32; font-size: 13px; margin: 8px 0; }
+
+/* ---------- Admin shell ---------- */
+.admin-shell { display: flex; min-height: 100vh; background: #f5f5f5; }
+.admin-nav { width: 220px; background: #A03037; color: #fff; padding: 20px 14px; display: flex; flex-direction: column; gap: 6px; }
+.admin-brand { color: #fff !important; font-weight: 700; font-size: 18px; margin-bottom: 8px; }
+.admin-role { font-size: 11px; opacity: .85; text-transform: uppercase; letter-spacing: .5px; margin: 0 0 12px; }
+.admin-nav a { color: #fff; text-decoration: none; padding: 8px 10px; border-radius: 4px; font-size: 14px; }
+.admin-nav a.active, .admin-nav a:hover { background: rgba(255,255,255,.15); }
+.admin-logout { margin-top: 16px; background: transparent; border: 1px solid rgba(255,255,255,.4); color: #fff; padding: 8px; border-radius: 4px; cursor: pointer; }
+.admin-store { margin-top: auto; font-size: 13px; opacity: .9; }
+.admin-main { flex: 1; padding: 28px 32px; overflow: auto; }
+.admin-main h1 { margin: 0 0 8px; font-size: 24px; font-weight: 500; }
+.admin-cards { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 20px; }
+.admin-card { background: #fff; border-radius: 6px; padding: 18px 22px; min-width: 140px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+.admin-card h3 { margin: 0; font-size: 13px; color: #666; font-weight: 500; }
+.admin-card b { font-size: 28px; display: block; margin-top: 6px; }
+.admin-table { width: 100%; border-collapse: collapse; background: #fff; margin-top: 16px; font-size: 13px; }
+.admin-table th, .admin-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #eee; }
+.admin-table th { background: #fafafa; font-weight: 500; color: #555; }
+.admin-form { margin: 16px 0 24px; max-width: 640px; }
+.badge-status { text-transform: capitalize; font-size: 12px; padding: 2px 8px; border-radius: 10px; background: #eee; }
+.badge-status.pending { background: #fff3cd; }
+.badge-status.processing { background: #cfe2ff; }
+.badge-status.shipped { background: #d1e7dd; }
+.badge-status.delivered { background: #d1e7dd; }
+.badge-status.cancelled { background: #f8d7da; }

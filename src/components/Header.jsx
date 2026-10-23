@@ -45,16 +45,29 @@ export default function Header({ bare = false }) {
           <>
             <form className="search" role="search" onSubmit={submit}>
               <SearchIcon />
-              <input type="search" placeholder="Search ..." value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search books" />
+              <input
+                type="search"
+                placeholder="Search ..."
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                aria-label="Search books"
+              />
             </form>
             <div className="hbtns">
               <div className="hbtn-wrap" ref={menuRef}>
                 {user ? (
-                  <button className="hbtn" onClick={() => setOpen((o) => !o)} aria-haspopup="menu" aria-expanded={open}>
+                  <button
+                    className="hbtn"
+                    onClick={() => setOpen((o) => !o)}
+                    aria-haspopup="menu"
+                    aria-expanded={open}
+                  >
                     <PersonIcon /><span>Profile</span>
                   </button>
                 ) : (
-                  <Link className="hbtn" to="/login"><PersonIcon /><span>Profile</span></Link>
+                  <Link className="hbtn" to="/login">
+                    <PersonIcon /><span>Profile</span>
+                  </Link>
                 )}
                 {open && user && (
                   <div className="menu" role="menu">
@@ -62,12 +75,27 @@ export default function Header({ bare = false }) {
                     <Link role="menuitem" to="/profile">Profile</Link>
                     <Link role="menuitem" to="/orders">My Orders</Link>
                     <Link role="menuitem" to="/wishlist">My Wishlist</Link>
-                    <button role="menuitem" onClick={async () => { setOpen(false); await logout(); nav('/'); }}>Logout</button>
+                    {(user.role === 'admin' || user.role === 'helper') && (
+                      <Link role="menuitem" to="/admin">Dashboard</Link>
+                    )}
+                    <button
+                      role="menuitem"
+                      onClick={async () => {
+                        setOpen(false);
+                        await logout();
+                        nav('/');
+                      }}
+                    >
+                      Logout
+                    </button>
                   </div>
                 )}
               </div>
               <Link className="hbtn" to="/cart" aria-label={`Cart, ${count} items`}>
-                <span className="cart-ico"><CartIcon />{count > 0 && <i className="badge">{count}</i>}</span>
+                <span className="cart-ico">
+                  <CartIcon />
+                  {count > 0 && <i className="badge">{count}</i>}
+                </span>
                 <span>Cart</span>
               </Link>
             </div>

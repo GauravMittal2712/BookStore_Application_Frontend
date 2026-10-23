@@ -5,11 +5,18 @@ import BooksPage from './pages/BooksPage.jsx';
 import BookDetailPage from './pages/BookDetailPage.jsx';
 import AuthPage from './pages/AuthPage.jsx';
 import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
+import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
 import CartPage from './pages/CartPage.jsx';
 import OrderSuccessPage from './pages/OrderSuccessPage.jsx';
 import OrdersPage from './pages/OrdersPage.jsx';
 import WishlistPage from './pages/WishlistPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
+import AdminLayout, { RequireStaff } from './pages/admin/AdminLayout.jsx';
+import AdminHome from './pages/admin/AdminHome.jsx';
+import AdminBooks from './pages/admin/AdminBooks.jsx';
+import AdminInventory from './pages/admin/AdminInventory.jsx';
+import AdminOrders from './pages/admin/AdminOrders.jsx';
+import AdminUsers from './pages/admin/AdminUsers.jsx';
 
 export function RequireAuth({ children }) {
   const { user, ready } = useAuth();
@@ -25,6 +32,16 @@ export default function App() {
       <Route path="/login" element={<AuthPage mode="login" />} />
       <Route path="/signup" element={<AuthPage mode="signup" />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+      <Route path="/admin" element={<RequireStaff><AdminLayout /></RequireStaff>}>
+        <Route index element={<AdminHome />} />
+        <Route path="books" element={<AdminBooks />} />
+        <Route path="inventory" element={<AdminInventory />} />
+        <Route path="orders" element={<AdminOrders />} />
+        <Route path="users" element={<AdminUsers />} />
+      </Route>
+
       <Route element={<Layout />}>
         <Route path="/" element={<BooksPage />} />
         <Route path="/books/:bookId" element={<BookDetailPage />} />
