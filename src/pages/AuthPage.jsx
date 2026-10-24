@@ -33,6 +33,10 @@ function loadGoogleScript() {
   });
 }
 
+// Google's script must be initialised only once per page load; the callback always calls the latest handler.
+let gsiInitialized = false;
+const googleHandler = { current: null };
+
 export default function AuthPage({ mode }) {
   const signup = mode === 'signup';
   const { user, ready, login, register, loginWithGoogle } = useAuth();
@@ -46,40 +50,44 @@ export default function AuthPage({ mode }) {
   const [busy, setBusy] = useState(false);
   const googleBtnRef = useRef(null);
 
-  if (ready && user) return <Navigate to={from} replace />;
   const set = (k) => (e) => {
     setF({ ...f, [k]: e.target.value });
     setErrs({ ...errs, [k]: '' });
   };
 
+  googleHandler.current = async (resp) => {
+    setServerErr('');
+    setBusy(true);
+    try {
+      await loginWithGoogle(resp.credential);
+      nav(from, { replace: true });
+    } catch (ex) {
+      setServerErr(errorText(ex));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   useEffect(() => {
-    if (!GOOGLE_CLIENT_ID || signup || !googleBtnRef.current) return;
+    if (!GOOGLE_CLIENT_ID || !googleBtnRef.current) return undefined;
     let cancelled = false;
     (async () => {
       try {
         await loadGoogleScript();
         if (cancelled || !window.google?.accounts?.id) return;
-        window.google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          callback: async (resp) => {
-            setServerErr('');
-            setBusy(true);
-            try {
-              await loginWithGoogle(resp.credential);
-              nav(from, { replace: true });
-            } catch (ex) {
-              setServerErr(errorText(ex));
-            } finally {
-              setBusy(false);
-            }
-          },
-        });
+        if (!gsiInitialized) {
+          window.google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: (resp) => googleHandler.current?.(resp),
+          });
+          gsiInitialized = true;
+        }
         googleBtnRef.current.innerHTML = '';
         window.google.accounts.id.renderButton(googleBtnRef.current, {
           theme: 'outline',
           size: 'large',
           width: 280,
-          text: 'signin_with',
+          text: signup ? 'signup_with' : 'signin_with',
         });
       } catch {
         /* script blocked */
@@ -88,7 +96,9 @@ export default function AuthPage({ mode }) {
     return () => {
       cancelled = true;
     };
-  }, [signup, loginWithGoogle, nav, from]);
+  }, [signup]);
+
+  if (ready && user) return <Navigate to={from} replace />;
 
   const submit = async (e) => {
     e.preventDefault();
@@ -171,17 +181,11 @@ export default function AuthPage({ mode }) {
               {busy ? 'Please wait…' : signup ? 'Signup' : 'Login'}
             </button>
           </form>
-          {!signup && (
+          {GOOGLE_CLIENT_ID && (
             <>
               <div className="auth-or"><span>OR</span></div>
               <div className="auth-social">
                 <div ref={googleBtnRef} className="google-btn-host" />
-                {!GOOGLE_CLIENT_ID && (
-                  <p className="hint-muted">Set VITE_GOOGLE_CLIENT_ID to enable Google login</p>
-                )}
-                <button type="button" className="btn-fb" disabled title="Facebook login not configured">
-                  Facebook
-                </button>
               </div>
             </>
           )}
