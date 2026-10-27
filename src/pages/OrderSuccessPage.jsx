@@ -12,7 +12,7 @@ export default function OrderSuccessPage() {
       <h1>Order Placed Successfully</h1>
       <Confetti small />
       <p className="success-msg">
-        hurray!! your order is confirmed<br />
+        hurray!! your order is confirmed{order.paymentStatus === 'paid' ? ' and paid' : ''}<br />
         the order id is <b>#{order.id}</b> save the order id for<br />
         further communication..
       </p>

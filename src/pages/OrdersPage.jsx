@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { booksApi, ordersApi } from '../api/index.js';
+import { booksApi, ordersApi, paymentsApi } from '../api/index.js';
+import { useAuth } from '../context/AuthContext.jsx';
+import { useToast } from '../context/ToastContext.jsx';
 import Breadcrumb from '../components/Breadcrumb.jsx';
 import BookCover from '../components/BookCover.jsx';
 import { errorText, money, shortDate } from '../utils/format.js';
+import { payWithRazorpay } from '../utils/razorpay.js';
 
 const LABEL = { pending: 'Order Placed', processing: 'Processing', shipped: 'Shipped', delivered: 'Delivered', cancelled: 'Cancelled' };
 
@@ -13,6 +16,9 @@ function statusDate(order) {
 }
 
 export default function OrdersPage() {
+  const { user } = useAuth();
+  const toast = useToast();
+  const [paying, setPaying] = useState('');
   const [orders, setOrders] = useState(null);
   const [meta, setMeta] = useState(null);
   const [books, setBooks] = useState({});
@@ -35,6 +41,19 @@ export default function OrdersPage() {
   };
   useEffect(() => { load(1); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const payNow = async (o) => {
+    setPaying(o.id);
+    try {
+      const intent = await paymentsApi.create(o.id);
+      const response = await payWithRazorpay(intent.data, { name: user.name, email: user.email, contact: user.mobile });
+      await paymentsApi.verify(response);
+      toast('Payment received. Thank you!', 'success');
+      await load(1);
+    } catch (e) {
+      if (!e?.dismissed) toast(errorText(e), 'error');
+    } finally { setPaying(''); }
+  };
+
   const rows = (orders || []).flatMap((o) => o.items.map((it, idx) => ({ o, it, key: `${o.id}-${idx}` })));
   return (
     <>
@@ -53,7 +72,13 @@ export default function OrdersPage() {
               {b?.author && <p className="by">by {b.author}</p>}
               <p className="price-row"><b>{money(it.price)}</b>{it.quantity > 1 && <span className="qty-note">× {it.quantity}</span>}</p>
             </div>
-            <p className={`order-status st-${o.status}`}><i />{LABEL[o.status] || o.status} on {statusDate(o)}</p>
+            <div className="ri-status">
+              <p className={`order-status st-${o.status}`}><i />{LABEL[o.status] || o.status} on {statusDate(o)}</p>
+              {o.paymentMethod === 'online' && o.status === 'pending' && o.paymentStatus !== 'paid' && it === o.items[0] && (
+                <button className="btn-blue sm" disabled={paying === o.id} onClick={() => payNow(o)}>{paying === o.id ? 'OPENING…' : `PAY ${money(o.totalAmount)}`}</button>
+              )}
+              {o.paymentStatus === 'paid' && it === o.items[0] && <p className="pay-badge">Paid online</p>}
+            </div>
           </article>
         );
       })}

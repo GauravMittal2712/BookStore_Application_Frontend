@@ -52,6 +52,11 @@ export const ordersApi = {
   changeStatus: (id, status) => patch(`/orders/${id}/status`, { status }),
 };
 
+export const paymentsApi = {
+  create: (orderId) => post('/payments/create', { orderId }),
+  verify: (body) => post('/payments/verify', body),
+};
+
 export const addressesApi = {
   list: () => get('/addresses'),
   create: (body) => post('/addresses', body),
@@ -87,6 +92,6 @@ export const inventoryApi = {
   update: (bookId, body) => put(`/inventory/${bookId}`, body),
 };
 
-// Aliases: some components import the singular names.
+
 export const addressApi = addressesApi;
 export const userApi = usersApi;

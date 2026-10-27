@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { addressApi, ordersApi, userApi } from '../api/index.js';
+import { addressApi, ordersApi, paymentsApi, userApi } from '../api/index.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
@@ -9,6 +9,7 @@ import BookCover from '../components/BookCover.jsx';
 import { AddressCard, AddressCreate } from '../components/Address.jsx';
 import { ChevronDown, PinIcon } from '../components/Icons.jsx';
 import { MOBILE_RE, errorText, money, moneyTight } from '../utils/format.js';
+import { payWithRazorpay } from '../utils/razorpay.js';
 
 const uuid = () => (globalThis.crypto?.randomUUID?.() ?? 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
   const r = (Math.random() * 16) | 0;
@@ -29,6 +30,7 @@ export default function CartPage() {
   const [locOpen, setLocOpen] = useState(false);
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
+  const [method, setMethod] = useState('online'); // 'online' | 'cod'
   const keyRef = useRef(null);
   const locRef = useRef(null);
 
@@ -83,15 +85,34 @@ export default function CartPage() {
   const checkout = async () => {
     setBusy(true); setErr('');
     keyRef.current = keyRef.current || uuid();
+    let order;
     try {
-      const { data: order } = await ordersApi.place({ addressId: selected.id }, keyRef.current);
+      ({ data: order } = await ordersApi.place({ addressId: selected.id, paymentMethod: method }, keyRef.current));
       keyRef.current = null;
       await refresh();
-      nav('/order-success', { replace: true, state: { order, address: selected } });
     } catch (e) {
       if (e.status && e.status < 500) keyRef.current = null; // definitive failure -> next attempt is a new order
       setErr(errorText(e));
       refresh();
+      setBusy(false);
+      return;
+    }
+
+    if (method === 'cod') {
+      setBusy(false);
+      return nav('/order-success', { replace: true, state: { order, address: selected } });
+    }
+
+    // Online: the order (and its stock reservation) exists; now collect the money.
+    try {
+      const intent = await paymentsApi.create(order.id);
+      const response = await payWithRazorpay(intent.data, { name: user.name, email: user.email, contact: user.mobile });
+      await paymentsApi.verify(response);
+      nav('/order-success', { replace: true, state: { order: { ...order, paymentStatus: 'paid' }, address: selected } });
+    } catch (e) {
+      // The order stays pending/unpaid; the customer can retry from My Orders.
+      toast(e?.dismissed ? 'Payment cancelled. You can complete it from My Orders.' : errorText(e), 'error');
+      nav('/orders', { replace: true });
     } finally { setBusy(false); }
   };
 
@@ -183,9 +204,14 @@ export default function CartPage() {
                 ))}
               </ul>
               <p className="sum-total"><span>Total</span><b>{money(cart.subtotal)}</b></p>
+              <fieldset className="pay-method">
+                <legend>Payment</legend>
+                <label><input type="radio" name="pay" checked={method === 'online'} onChange={() => setMethod('online')} /> Pay online (UPI, cards, netbanking, wallets)</label>
+                <label><input type="radio" name="pay" checked={method === 'cod'} onChange={() => setMethod('cod')} /> Cash on delivery</label>
+              </fieldset>
               {selected && <p className="sum-addr"><b>Deliver to:</b> {selected.street}, {selected.city}, {selected.state} {selected.zipCode}</p>}
               {err && <p className="form-err">{err}</p>}
-              <div className="acc-actions"><button className="btn-blue" disabled={busy || !items.length} onClick={checkout}>{busy ? 'PLACING ORDER…' : 'CHECKOUT'}</button></div>
+              <div className="acc-actions"><button className="btn-blue" disabled={busy || !items.length} onClick={checkout}>{busy ? 'PROCESSING…' : method === 'online' ? 'PAY NOW' : 'PLACE ORDER'}</button></div>
             </div>
           )}
         </section>

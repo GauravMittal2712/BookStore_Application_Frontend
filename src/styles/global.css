@@ -372,3 +372,10 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .badge-status.shipped { background: #d1e7dd; }
 .badge-status.delivered { background: #d1e7dd; }
 .badge-status.cancelled { background: #f8d7da; }
+
+/* ---- payments ---- */
+.pay-method { border: 1px solid #e0e0e0; border-radius: 4px; padding: 10px 14px; margin: 14px 0; display: grid; gap: 8px; }
+.pay-method legend { font-weight: 700; padding: 0 6px; }
+.pay-method label { display: flex; gap: 8px; align-items: center; cursor: pointer; }
+.ri-status { display: grid; gap: 8px; justify-items: end; align-content: center; }
+.pay-badge { color: #388e3c; font-weight: 700; font-size: 13px; margin: 0; }
