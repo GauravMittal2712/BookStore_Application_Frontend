@@ -14,7 +14,6 @@ function wrap(title, max = 11, maxLines = 5) {
   return lines;
 }
 
-// Real cover when the API has one, otherwise a generated cover (seed data has no images).
 export default function BookCover({ book, className = '' }) {
   const [failed, setFailed] = useState(false);
   if (book.coverImageUrl && !failed) {

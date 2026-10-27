@@ -1,4 +1,4 @@
-// The API stores money as integer paise.
+
 export function money(paise) {
   const n = (paise ?? 0) / 100;
   return `Rs. ${Number.isInteger(n) ? n : n.toFixed(2)}`;
@@ -22,7 +22,7 @@ export function passwordError(pw) {
   if (!/[a-z]/.test(pw) || !/[A-Z]/.test(pw) || !/\d/.test(pw)) return PASSWORD_HINT;
   return '';
 }
-// Show the first field-level message the API returned, else its general message.
+
 export function errorText(e) {
   if (e?.details?.length) return e.details.map((d) => d.message).join('. ');
   return e?.message || 'Something went wrong';

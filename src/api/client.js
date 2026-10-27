@@ -1,7 +1,4 @@
-// Thin fetch wrapper for the bookstore API.
-//  - success envelope: { success: true, data, meta }
-//  - error envelope:   { success: false, error: { code, message, details } }
-// The access token lives in memory only; the refresh token is an httpOnly cookie.
+
 const BASE = import.meta.env.VITE_API_URL || '/api/v1';
 
 let accessToken = null;
@@ -45,8 +42,6 @@ async function raw(path, { method = 'GET', body, headers = {}, auth = true } = {
   return json;
 }
 
-// Refresh tokens rotate, and re-using an old one revokes the whole session on the server.
-// So concurrent callers MUST share one in-flight request.
 export function refreshSession() {
   if (!refreshPromise) {
     refreshPromise = raw('/auth/refresh', { method: 'POST', auth: false })

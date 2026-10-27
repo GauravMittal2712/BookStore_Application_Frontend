@@ -33,7 +33,6 @@ function loadGoogleScript() {
   });
 }
 
-// Google's script must be initialised only once per page load; the callback always calls the latest handler.
 let gsiInitialized = false;
 const googleHandler = { current: null };
 

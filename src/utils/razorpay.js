@@ -1,4 +1,4 @@
-// Loads Razorpay Checkout once and opens it for a payment created by POST /payments/create.
+
 let loading = null;
 function loadScript() {
   if (window.Razorpay) return Promise.resolve();
@@ -14,11 +14,6 @@ function loadScript() {
   return loading;
 }
 
-/**
- * Resolves with the Razorpay response ({razorpay_order_id, razorpay_payment_id, razorpay_signature})
- * on success, rejects with { dismissed: true } if the customer closes the window,
- * or with an Error if the payment fails.
- */
 export async function payWithRazorpay({ keyId, razorpayOrderId, amount, currency }, { name, email, contact } = {}) {
   await loadScript();
   return new Promise((resolve, reject) => {

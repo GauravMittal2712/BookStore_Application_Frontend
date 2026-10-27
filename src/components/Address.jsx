@@ -47,7 +47,6 @@ export function AddressFields({ value, onChange, disabled = false, showType = fa
 
 const heading = (a, i) => `${i + 1}.${(a.type || 'home').toUpperCase()}`;
 
-// One saved address: read-only until "Edit" is pressed. `selectable` adds the checkout radio.
 export function AddressCard({ address, index, selectable, selected, onSelect, onSaved, onRemoved }) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState(address);

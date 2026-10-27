@@ -91,7 +91,7 @@ export default function CartPage() {
       keyRef.current = null;
       await refresh();
     } catch (e) {
-      if (e.status && e.status < 500) keyRef.current = null; // definitive failure -> next attempt is a new order
+      if (e.status && e.status < 500) keyRef.current = null;
       setErr(errorText(e));
       refresh();
       setBusy(false);
@@ -103,14 +103,14 @@ export default function CartPage() {
       return nav('/order-success', { replace: true, state: { order, address: selected } });
     }
 
-    // Online: the order (and its stock reservation) exists; now collect the money.
+
     try {
       const intent = await paymentsApi.create(order.id);
       const response = await payWithRazorpay(intent.data, { name: user.name, email: user.email, contact: user.mobile });
       await paymentsApi.verify(response);
       nav('/order-success', { replace: true, state: { order: { ...order, paymentStatus: 'paid' }, address: selected } });
     } catch (e) {
-      // The order stays pending/unpaid; the customer can retry from My Orders.
+     
       toast(e?.dismissed ? 'Payment cancelled. You can complete it from My Orders.' : errorText(e), 'error');
       nav('/orders', { replace: true });
     } finally { setBusy(false); }

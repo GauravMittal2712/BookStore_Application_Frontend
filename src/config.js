@@ -1,4 +1,4 @@
-// Contact details shown on the "Order placed" page. Edit to your real store details.
+
 export const STORE = {
   email: 'admin@bookstore.com',
   phone: '+91 8163475881',
