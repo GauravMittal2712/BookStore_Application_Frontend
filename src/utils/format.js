@@ -27,3 +27,14 @@ export function errorText(e) {
   if (e?.details?.length) return e.details.map((d) => d.message).join('. ');
   return e?.message || 'Something went wrong';
 }
+// ---- staff (admin / helper) helpers ----
+export const isStaff = (u) => !!u && (u.role === 'admin' || u.role === 'helper');
+export const homeFor = (u) => (isStaff(u) ? '/admin' : '/');
+export function dateTime(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+export function dateOnly(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+}

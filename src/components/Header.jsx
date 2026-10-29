@@ -75,9 +75,6 @@ export default function Header({ bare = false }) {
                     <Link role="menuitem" to="/profile">Profile</Link>
                     <Link role="menuitem" to="/orders">My Orders</Link>
                     <Link role="menuitem" to="/wishlist">My Wishlist</Link>
-                    {(user.role === 'admin' || user.role === 'helper') && (
-                      <Link role="menuitem" to="/admin">Dashboard</Link>
-                    )}
                     <button
                       role="menuitem"
                       onClick={async () => {

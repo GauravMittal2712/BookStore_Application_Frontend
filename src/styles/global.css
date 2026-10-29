@@ -347,31 +347,7 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .hint-muted { font-size: 11px; color: #999; text-align: center; }
 .form-ok { color: #2e7d32; font-size: 13px; margin: 8px 0; }
 
-/* ---------- Admin shell ---------- */
-.admin-shell { display: flex; min-height: 100vh; background: #f5f5f5; }
-.admin-nav { width: 220px; background: #A03037; color: #fff; padding: 20px 14px; display: flex; flex-direction: column; gap: 6px; }
-.admin-brand { color: #fff !important; font-weight: 700; font-size: 18px; margin-bottom: 8px; }
-.admin-role { font-size: 11px; opacity: .85; text-transform: uppercase; letter-spacing: .5px; margin: 0 0 12px; }
-.admin-nav a { color: #fff; text-decoration: none; padding: 8px 10px; border-radius: 4px; font-size: 14px; }
-.admin-nav a.active, .admin-nav a:hover { background: rgba(255,255,255,.15); }
-.admin-logout { margin-top: 16px; background: transparent; border: 1px solid rgba(255,255,255,.4); color: #fff; padding: 8px; border-radius: 4px; cursor: pointer; }
-.admin-store { margin-top: auto; font-size: 13px; opacity: .9; }
-.admin-main { flex: 1; padding: 28px 32px; overflow: auto; }
-.admin-main h1 { margin: 0 0 8px; font-size: 24px; font-weight: 500; }
-.admin-cards { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 20px; }
-.admin-card { background: #fff; border-radius: 6px; padding: 18px 22px; min-width: 140px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
-.admin-card h3 { margin: 0; font-size: 13px; color: #666; font-weight: 500; }
-.admin-card b { font-size: 28px; display: block; margin-top: 6px; }
-.admin-table { width: 100%; border-collapse: collapse; background: #fff; margin-top: 16px; font-size: 13px; }
-.admin-table th, .admin-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #eee; }
-.admin-table th { background: #fafafa; font-weight: 500; color: #555; }
-.admin-form { margin: 16px 0 24px; max-width: 640px; }
-.badge-status { text-transform: capitalize; font-size: 12px; padding: 2px 8px; border-radius: 10px; background: #eee; }
-.badge-status.pending { background: #fff3cd; }
-.badge-status.processing { background: #cfe2ff; }
-.badge-status.shipped { background: #d1e7dd; }
-.badge-status.delivered { background: #d1e7dd; }
-.badge-status.cancelled { background: #f8d7da; }
+
 
 /* ---- payments ---- */
 .pay-method { border: 1px solid #e0e0e0; border-radius: 4px; padding: 10px 14px; margin: 14px 0; display: grid; gap: 8px; }
@@ -379,3 +355,107 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .pay-method label { display: flex; gap: 8px; align-items: center; cursor: pointer; }
 .ri-status { display: grid; gap: 8px; justify-items: end; align-content: center; }
 .pay-badge { color: #388e3c; font-weight: 700; font-size: 13px; margin: 0; }
+
+
+/* ================= Auth page refresh (login / signup) ================= */
+.auth-page { background: linear-gradient(135deg, #ede9fe 0%, #f5f3ff 45%, #fdf2f8 100%); }
+
+.auth-left { background: #fff; border-radius: 24px; box-shadow: 0 10px 30px rgba(91, 33, 182, .10); }
+.auth-left p { font-size: 15px; font-weight: 700; letter-spacing: 1.2px; color: var(--ink-2); }
+
+.auth-card {
+  --auth-pad: 52px;
+  width: 430px;
+  padding: 0 var(--auth-pad) 40px;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(46, 16, 101, .18);
+  overflow: hidden;
+}
+
+/* ---- tabs: full-width divider line, dark active word, sliding purple underline ---- */
+.auth-tabs {
+  display: flex;
+  justify-content: stretch;
+  margin: 0 calc(var(--auth-pad) * -1) 28px;
+  border-bottom: 1px solid #e6e6ee;
+}
+.auth-tabs a {
+  flex: 1;
+  position: relative;
+  text-align: center;
+  padding: 24px 0 16px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: .8px;
+  line-height: 1.2;
+  color: #a3a3ad;
+  transition: color .2s ease;
+}
+.auth-tabs a + a { border-left: 1px solid #e6e6ee; }          /* line between LOGIN | SIGNUP */
+.auth-tabs a:hover { color: #55555f; }
+.auth-tabs a.on,
+.auth-tabs a[aria-selected='true'] { color: #111; }            /* active word turns dark */
+
+.auth-tabs a::after,
+.auth-tabs a.on::after,
+.auth-tabs a[aria-selected='true']::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  width: auto; margin-left: 0;
+  height: 3px;
+  border-radius: 0;
+  background: var(--red);
+  transform: scaleX(0);
+  transition: transform .25s ease;
+}
+.auth-tabs a.on::after,
+.auth-tabs a[aria-selected='true']::after { transform: scaleX(1); }
+
+/* ---- fields ---- */
+.afield { margin-bottom: 18px; }
+.alabel { font-size: 12px; font-weight: 600; color: #3b3b46; margin-bottom: 6px; }
+.afield input {
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid #dcdce4;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color .15s, box-shadow .15s;
+}
+.afield input:focus { border-color: var(--red); box-shadow: 0 0 0 3px rgba(109, 40, 217, .14); }
+.afield.bad input { border-color: #e53935; box-shadow: 0 0 0 3px rgba(229, 57, 53, .10); }
+.ferr { font-size: 11.5px; margin-top: 5px; }
+
+.pwd { position: relative; }
+.pwd input { padding-right: 44px; }
+.eye { right: 4px; top: 0; height: 44px; width: 38px; justify-content: center; color: #8a8a96; border-radius: 8px; }
+.eye:hover { color: var(--red); }
+
+/* ---- forgot password ---- */
+.auth-forgot { text-align: right; margin: -6px 0 18px; font-size: 13px; }
+.auth-forgot a { color: var(--red); font-weight: 500; }
+.auth-forgot a:hover { text-decoration: underline; }
+
+/* ---- main button ---- */
+.auth-card .btn-red {
+  height: 46px;
+  margin-top: 0;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: .3px;
+  box-shadow: 0 4px 12px rgba(109, 40, 217, .28);
+  transition: background .15s, transform .1s, box-shadow .15s;
+}
+.auth-card .btn-red:active:not(:disabled) { transform: translateY(1px); box-shadow: 0 2px 6px rgba(109, 40, 217, .28); }
+
+/* ---- OR divider ---- */
+.auth-or { display: flex; align-items: center; gap: 12px; margin: 22px 0 16px; font-size: 12px; letter-spacing: 1px; color: #9a9aa6; }
+.auth-or::before, .auth-or::after { content: ''; flex: 1; height: 1px; background: #e6e6ee; }
+.google-btn-host { width: 100%; }
+
+@media (max-width: 700px) {
+  .auth-card { --auth-pad: 24px; width: 100%; max-width: 430px; }
+  .auth-tabs a { padding-top: 20px; }
+}

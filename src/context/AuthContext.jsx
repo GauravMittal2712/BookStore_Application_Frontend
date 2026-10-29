@@ -68,9 +68,9 @@ export function AuthProvider({ children }) {
     clearSession();
   }, [clearSession]);
 
-  const value = useMemo(
-    () => ({ user, ready, login, register, loginWithGoogle, logout, setUser }),
-    [user, ready, login, register, loginWithGoogle, logout]
+    const value = useMemo(
+    () => ({ user, ready, login, register, loginWithGoogle, logout, setUser, forget: clearSession }),
+    [user, ready, login, register, loginWithGoogle, logout, clearSession]
   );
 
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;

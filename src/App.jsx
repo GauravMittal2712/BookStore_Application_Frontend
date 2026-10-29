@@ -11,12 +11,13 @@ import OrderSuccessPage from './pages/OrderSuccessPage.jsx';
 import OrdersPage from './pages/OrdersPage.jsx';
 import WishlistPage from './pages/WishlistPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
-import AdminLayout, { RequireStaff } from './pages/admin/AdminLayout.jsx';
+import AdminLayout, { RequireRole, RequireStaff } from './pages/admin/AdminLayout.jsx';
 import AdminHome from './pages/admin/AdminHome.jsx';
 import AdminBooks from './pages/admin/AdminBooks.jsx';
 import AdminInventory from './pages/admin/AdminInventory.jsx';
 import AdminOrders from './pages/admin/AdminOrders.jsx';
 import AdminUsers from './pages/admin/AdminUsers.jsx';
+import AdminAccount from './pages/admin/AdminAccount.jsx';
 
 export function RequireAuth({ children }) {
   const { user, ready } = useAuth();
@@ -38,8 +39,10 @@ export default function App() {
         <Route index element={<AdminHome />} />
         <Route path="books" element={<AdminBooks />} />
         <Route path="inventory" element={<AdminInventory />} />
-        <Route path="orders" element={<AdminOrders />} />
-        <Route path="users" element={<AdminUsers />} />
+        <Route path="orders" element={<RequireRole roles={['admin']}><AdminOrders /></RequireRole>} />
+        <Route path="users" element={<RequireRole roles={['admin']}><AdminUsers /></RequireRole>} />
+        <Route path="account" element={<AdminAccount />} />
+        <Route path="*" element={<Navigate to="/admin" replace />} />
       </Route>
 
       <Route element={<Layout />}>

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { EyeIcon } from '../components/Icons.jsx';
-import { MOBILE_RE, errorText, passwordError } from '../utils/format.js';
+import { MOBILE_RE, errorText, isStaff, passwordError } from '../utils/format.js';
 import { GOOGLE_CLIENT_ID } from '../config.js';
 
 function Field({ label, error, children }) {
@@ -33,6 +33,7 @@ function loadGoogleScript() {
   });
 }
 
+// Google's script must be initialised only once per page load; the callback always calls the latest handler.
 let gsiInitialized = false;
 const googleHandler = { current: null };
 
@@ -41,7 +42,11 @@ export default function AuthPage({ mode }) {
   const { user, ready, login, register, loginWithGoogle } = useAuth();
   const nav = useNavigate();
   const loc = useLocation();
-  const from = loc.state?.from || '/';
+  const rawFrom = loc.state?.from || '/';
+  // staff always land in the admin console; customers never land in it
+  const destFor = (u) => (isStaff(u)
+    ? (rawFrom.startsWith('/admin') ? rawFrom : '/admin')
+    : (rawFrom.startsWith('/admin') ? '/' : rawFrom));
   const [f, setF] = useState({ name: '', email: '', password: '', mobile: '' });
   const [show, setShow] = useState(false);
   const [errs, setErrs] = useState({});
@@ -58,8 +63,8 @@ export default function AuthPage({ mode }) {
     setServerErr('');
     setBusy(true);
     try {
-      await loginWithGoogle(resp.credential);
-      nav(from, { replace: true });
+      const u = await loginWithGoogle(resp.credential);
+      nav(destFor(u), { replace: true });
     } catch (ex) {
       setServerErr(errorText(ex));
     } finally {
@@ -97,7 +102,7 @@ export default function AuthPage({ mode }) {
     };
   }, [signup]);
 
-  if (ready && user) return <Navigate to={from} replace />;
+  if (ready && user) return <Navigate to={destFor(user)} replace />;
 
   const submit = async (e) => {
     e.preventDefault();
@@ -114,15 +119,15 @@ export default function AuthPage({ mode }) {
     if (Object.keys(er).length) return;
     setBusy(true);
     try {
-      if (signup) {
-        await register({
+      const u = signup
+        ? await register({
           name: f.name.trim(),
           email: f.email.trim(),
           password: f.password,
           mobile: f.mobile.trim() || undefined,
-        });
-      } else await login(f.email.trim(), f.password);
-      nav(from, { replace: true });
+        })
+        : await login(f.email.trim(), f.password);
+      nav(destFor(u), { replace: true });
     } catch (ex) {
       setServerErr(errorText(ex));
     } finally {
